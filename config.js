@@ -4,7 +4,7 @@
 
 const SUPABASE_CONFIG = {
     URL: 'https://ghxrznaulvlizoxisuza.supabase.co',
-    ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoeHJ6bmF1bHZsaXpveDFzdXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEzODAxNTcsImV4cCI6MTgzNzU0MDE1N30.WrU7SYW4DtDXoF9E0a9UpXY7QvB2LmN3oK8pR5gH9sQ'
+    ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdoeHJ6bmF1bHZsaXpveGlzdXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMDMxNzgsImV4cCI6MjA3ODU3OTE3OH0.VSY9UiZUl9q35UDDIrN-TcG4TPA0Zp09ABlcvUqYuD0'
 };
 
 // Inicializar cliente Supabase
