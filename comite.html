@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Comité - Graduación Escolar</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #0F3B6B; --primary-light: #1a5490; --primary-dark: #082555; --danger: #dc2626; --success: #059669; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0F3B6B 0%, #082555 100%); color: #374151; line-height: 1.6; min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); margin-bottom: 30px; text-align: center; }
+        .header h1 { color: var(--primary); font-size: 28px; margin-bottom: 10px; }
+        .header p { color: #6b7280; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #374151; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(15, 59, 107, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        button { padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.3s; }
+        button:hover { background: var(--primary-light); }
+        button.danger { background: var(--danger); }
+        button.success { background: var(--success); }
+        button.secondary { background: #6b7280; }
+        .alert { padding: 15px; margin-bottom: 20px; border-radius: 6px; display: none; }
+        .alert.active { display: block; }
+        .alert.success { background: #d1fae5; color: #065f46; border-left: 4px solid var(--success); }
+        .alert.error { background: #fee2e2; color: #7f1d1d; border-left: 4px solid var(--danger); }
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--primary); }
+        .acompañante-item { background: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .acompañante-item span { color: #374151; }
+        .acompañante-item button { padding: 6px 12px; font-size: 12px; }
+        .tabla-resumen { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .tabla-resumen th, .tabla-resumen td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .tabla-resumen th { background: var(--primary); color: white; }
+        .tabla-resumen tbody tr:hover { background: #f9fafb; }
+        .progress-bar { background: #e5e7eb; height: 8px; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress { background: var(--success); height: 100%; width: 0%; transition: width 0.3s; }
+        footer { background: var(--primary-dark); color: white; text-align: center; padding: 15px; margin-top: 30px; border-radius: 6px; font-size: 12px; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Registro de Graduación</h1>
+            <p>Ingresa el código de acceso para comenzar</p>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <!-- PASO 1: CÓDIGO DE ACCESO -->
+        <div id="step1" class="step active">
+            <div class="card">
+                <h2 class="step-title">Paso 1: Ingresa tu Código de Acceso</h2>
+                <div class="form-group">
+                    <label>Código de Acceso:</label>
+                    <input type="text" id="codigoAcceso" placeholder="Ej: ABC123XYZ" maxlength="20" required>
+                </div>
+                <button onclick="verificarCodigo()">Continuar</button>
+            </div>
+        </div>
+
+        <!-- PASO 2: SELECCIONAR EVENTO -->
+        <div id="step2" class="step">
+            <div class="card">
+                <h2 class="step-title">Paso 2: Selecciona el Evento</h2>
+                <div class="form-group">
+                    <label>Evento:</label>
+                    <select id="eventoSelect" required></select>
+                </div>
+                <div class="form-group">
+                    <label>¿Cuántos alumnos registrarás?</label>
+                    <select id="cantidadAlumnos" required>
+                        <option value="">Selecciona cantidad</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <button onclick="siguientePaso2()">Continuar</button>
+                <button class="secondary" onclick="volverPaso1()">Atrás</button>
+            </div>
+        </div>
+
+        <!-- PASO 3: INGRESAR ALUMNOS -->
+        <div id="step3" class="step">
+            <div class="card">
+                <h2 class="step-title">Paso 3: Ingresa Datos de Alumnos</h2>
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div id="alumnosForm"></div>
+                <button onclick="siguientePaso3()">Continuar a Acompañantes</button>
+                <button class="secondary" onclick="volverPaso2()">Atrás</button>
+            </div>
+        </div>
+
+        <!-- PASO 4: INGRESAR ACOMPAÑANTES -->
+        <div id="step4" class="step">
+            <div class="card">
+                <h2 class="step-title">Paso 4: Ingresa Acompañantes</h2>
+                <p style="color: #6b7280; margin-bottom: 20px;">Máximo 15 acompañantes por alumno</p>
+                <div id="acompañantesForm"></div>
+                <button onclick="siguientePaso4()">Continuar a Confirmación</button>
+                <button class="secondary" onclick="volverPaso3()">Atrás</button>
+            </div>
+        </div>
+
+        <!-- PASO 5: CONFIRMACIÓN -->
+        <div id="step5" class="step">
+            <div class="card">
+                <h2 class="step-title">Paso 5: Confirma tu Registro</h2>
+                <div id="resumenDatos" style="background: #f9fafb; padding: 20px; border-radius: 6px; margin-bottom: 20px;"></div>
+                <button class="success" onclick="guardarRegistro()">✅ Guardar Registro</button>
+                <button class="secondary" onclick="volverPaso4()">Atrás</button>
+            </div>
+        </div>
+
+        <!-- PASO 6: ÉXITO -->
+        <div id="step6" class="step">
+            <div class="card" style="text-align: center; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);">
+                <h2 style="color: #065f46; font-size: 24px; margin-bottom: 15px;">✅ ¡Registro Exitoso!</h2>
+                <p style="color: #047857; font-size: 16px; margin-bottom: 20px;">Tu registro ha sido guardado correctamente.</p>
+                <button class="success" onclick="descargarPDF()">📄 Descargar Comprobante PDF</button>
+                <button class="secondary" onclick="nuevoRegistro()">➕ Registrar Otro</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Sistema de Graduación Escolar © 2025 - Subau-1</p>
+        </footer>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        let currentStep = 1;
+        let registroData = { alumnos: [] };
+
+        // PASO 1: VERIFICAR CÓDIGO
+        async function verificarCodigo() {
+            const codigo = document.getElementById('codigoAcceso').value.trim().toUpperCase();
+            if (!codigo) {
+                showAlert('Ingresa un código', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.from('codigos_acceso').select('*').eq('codigo', codigo).eq('activo', true).single();
+                if (error || !data) {
+                    showAlert('Código inválido o no activo', 'error');
+                    return;
+                }
+
+                registroData.codigoId = data.id;
+                registroData.codigo = codigo;
+
+                // Cargar eventos
+                const { data: eventos } = await supabase.from('eventos').select('*');
+                const select = document.getElementById('eventoSelect');
+                select.innerHTML = eventos.map(e => `<option value="${e.id}">${e.nombre} - ${formatDate(e.fecha_evento)}</option>`).join('');
+
+                irAPaso(2);
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            }
+        }
+
+        // PASO 2: SELECCIONAR EVENTO Y CANTIDAD
+        function siguientePaso2() {
+            const evento = document.getElementById('eventoSelect').value;
+            const cantidad = document.getElementById('cantidadAlumnos').value;
+
+            if (!evento || !cantidad) {
+                showAlert('Completa todos los campos', 'error');
+                return;
+            }
+
+            registroData.eventoId = evento;
+            registroData.cantidadAlumnos = parseInt(cantidad);
+            registroData.alumnos = Array(parseInt(cantidad)).fill().map(() => ({ nombre: '', apellido: '', acompañantes: [] }));
+
+            generarFormAlumnos();
+            irAPaso(3);
+        }
+
+        // Generar formulario para alumnos
+        function generarFormAlumnos() {
+            let html = '';
+            for (let i = 0; i < registroData.cantidadAlumnos; i++) {
+                html += `
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px;">Alumno ${i + 1}</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Apellido:</label>
+                                <input type="text" id="apellido${i}" placeholder="Apellido" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nombre:</label>
+                                <input type="text" id="nombre${i}" placeholder="Nombre" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            document.getElementById('alumnosForm').innerHTML = html;
+            actualizarProgress(30);
+        }
+
+        // PASO 3: VALIDAR ALUMNOS
+        function siguientePaso3() {
+            for (let i = 0; i < registroData.cantidadAlumnos; i++) {
+                const apellido = document.getElementById(`apellido${i}`).value.trim();
+                const nombre = document.getElementById(`nombre${i}`).value.trim();
+
+                if (!apellido || !nombre) {
+                    showAlert(`Completa todos los datosdel alumno ${i + 1}`, 'error');
+                    return;
+                }
+
+                registroData.alumnos[i].nombre = nombre;
+                registroData.alumnos[i].apellido = apellido;
+            }
+
+            generarFormAcompañantes();
+            irAPaso(4);
+        }
+
+        // Generar formulario para acompañantes
+        function generarFormAcompañantes() {
+            let html = '';
+            for (let i = 0; i < registroData.cantidadAlumnos; i++) {
+                html += `
+                    <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px;">Acompañantes de ${registroData.alumnos[i].nombre} ${registroData.alumnos[i].apellido}</h3>
+                        <div id="acompañantes${i}"></div>
+                        <button type="button" onclick="agregarAcompañante(${i})" class="success" style="width: 100%; margin-bottom: 10px;">+ Agregar Acompañante</button>
+                    </div>
+                `;
+            }
+            document.getElementById('acompañantesForm').innerHTML = html;
+            actualizarProgress(60);
+
+            // Mostrar campo inicial para cada alumno
+            for (let i = 0; i < registroData.cantidadAlumnos; i++) {
+                agregarAcompañante(i);
+            }
+        }
+
+        // Agregar acompañante
+        function agregarAcompañante(alumnoIndex) {
+            if (registroData.alumnos[alumnoIndex].acompañantes.length >= 15) {
+                showAlert('Máximo 15 acompañantes por alumno', 'error');
+                return;
+            }
+
+            const acompIndex = registroData.alumnos[alumnoIndex].acompañantes.length;
+            registroData.alumnos[alumnoIndex].acompañantes.push({ nombre: '', apellido: '' });
+
+            const container = document.getElementById(`acompañantes${alumnoIndex}`);
+            const div = document.createElement('div');
+            div.id = `acomp${alumnoIndex}_${acompIndex}`;
+            div.className = 'acompañante-item';
+            div.innerHTML = `
+                <div style="flex: 1;">
+                    <input type="text" placeholder="Nombre" id="acompNombre${alumnoIndex}_${acompIndex}" style="margin-bottom: 8px;">
+                    <input type="text" placeholder="Apellido" id="acompApellido${alumnoIndex}_${acompIndex}">
+                </div>
+                <button type="button" onclick="eliminarAcompañante(${alumnoIndex}, ${acompIndex})" class="danger">✕</button>
+            `;
+            container.appendChild(div);
+        }
+
+        // Eliminar acompañante
+        function eliminarAcompañante(alumnoIndex, acompIndex) {
+            registroData.alumnos[alumnoIndex].acompañantes.splice(acompIndex, 1);
+            document.getElementById(`acomp${alumnoIndex}_${acompIndex}`).remove();
+        }
+
+        // PASO 4: GUARDAR ACOMPAÑANTES
+        function siguientePaso4() {
+            for (let i = 0; i < registroData.cantidadAlumnos; i++) {
+                const acompañantes = registroData.alumnos[i].acompañantes;
+                for (let j = 0; j < acompañantes.length; j++) {
+                    const nombre = document.getElementById(`acompNombre${i}_${j}`)?.value || '';
+                    const apellido = document.getElementById(`acompApellido${i}_${j}`)?.value || '';
+                    if (nombre || apellido) {
+                        acompañantes[j].nombre = nombre;
+                        acompañantes[j].apellido = apellido;
+                    }
+                }
+            }
+
+            mostrarResumen();
+            irAPaso(5);
+        }
+
+        // Mostrar resumen
+        function mostrarResumen() {
+            let html = '<table class="tabla-resumen"><thead><tr><th>Alumno</th><th>Acompañantes</th></tr></thead><tbody>';
+            for (let alumno of registroData.alumnos) {
+                const acompCount = alumno.acompañantes.filter(a => a.nombre || a.apellido).length;
+                html += `<tr><td>${alumno.nombre} ${alumno.apellido}</td><td>${acompCount}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            document.getElementById('resumenDatos').innerHTML = html;
+            actualizarProgress(90);
+        }
+
+        // GUARDAR REGISTRO EN BD
+        async function guardarRegistro() {
+            try {
+                // Insertar alumnos
+                for (let alumno of registroData.alumnos) {
+                    const { data: alumnoData, error: alumnoError } = await supabase.from('alumnos').insert([{
+                        evento_id: registroData.eventoId,
+                        nombre: alumno.nombre,
+                        apellido: alumno.apellido,
+                        total_acompañantes: alumno.acompañantes.filter(a => a.nombre || a.apellido).length
+                    }]).select().single();
+
+                    if (alumnoError) throw alumnoError;
+
+                    // Insertar acompañantes
+                    for (let acomp of alumno.acompañantes) {
+                        if (acomp.nombre || acomp.apellido) {
+                            await supabase.from('acompañantes').insert([{
+                                alumno_id: alumnoData.id,
+                                nombre: acomp.nombre || '',
+                                apellido: acomp.apellido || ''
+                            }]);
+                        }
+                    }
+                }
+
+                showAlert('✅ Registro guardado exitosamente', 'success');
+                irAPaso(6);
+                actualizarProgress(100);
+            } catch (err) {
+                showAlert('Error al guardar: ' + err.message, 'error');
+            }
+        }
+
+        // DESCARGAR PDF
+        async function descargarPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let yPosition = 20;
+
+                // Encabezado
+                doc.setFontSize(16);
+                doc.text('Comprobante de Registro', 20, yPosition);
+                yPosition += 15;
+
+                doc.setFontSize(12);
+                doc.text(`Código: ${registroData.codigo}`, 20, yPosition);
+                yPosition += 10;
+                doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 20, yPosition);
+                yPosition += 15;
+
+                // Listado de alumnos
+                doc.setFontSize(11);
+                doc.text('Alumnos Registrados:', 20, yPosition);
+                yPosition += 10;
+
+                for (let i = 0; i < registroData.alumnos.length; i++) {
+                    const alumno = registroData.alumnos[i];
+                    const acompCount = alumno.acompañantes.filter(a => a.nombre || a.apellido).length;
+                    doc.text(`${i + 1}. ${alumno.apellido}, ${alumno.nombre} - ${acompCount} acompañantes`, 20, yPosition);
+                    yPosition += 8;
+                }
+
+                doc.save('comprobante_registro.pdf');
+                showAlert('PDF descargado', 'success');
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            }
+        }
+
+        // FUNCIONES AUXILIARES
+        function irAPaso(paso) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${paso}`).classList.add('active');
+            currentStep = paso;
+        }
+
+        function volverPaso1() { irAPaso(1); actualizarProgress(10); }
+        function volverPaso2() { irAPaso(2); actualizarProgress(20); }
+        function volverPaso3() { irAPaso(3); actualizarProgress(30); }
+        function volverPaso4() { irAPaso(4); actualizarProgress(60); }
+
+        function actualizarProgress(valor) {
+            document.getElementById('progressBar').style.width = valor + '%';
+        }
+
+        function nuevoRegistro() {
+            registroData = { alumnos: [] };
+            document.getElementById('codigoAcceso').value = '';
+            irAPaso(1);
+            actualizarProgress(0);
+        }
+    </script>
+</body>
+</html>
+
